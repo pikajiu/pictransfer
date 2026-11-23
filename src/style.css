@@ -12,6 +12,9 @@ p{line-height:1.65;margin:.55em 0;color:#465952}
 #photos{position:absolute;width:1px;height:1px;opacity:0}
 .controls:focus-within .picker:has(+input:focus-visible){outline:2px solid #235646}
 .actions,.section-head,.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.actions a{display:inline-block;padding:10px 4px;color:#235646}
+details{margin:14px 0;color:#465952}
+summary{cursor:pointer}
 .section-head{justify-content:space-between;align-items:center;margin-top:22px}
 .actions label{display:grid;gap:5px;flex:1;max-width:280px}
 button,input{font:inherit}

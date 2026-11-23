@@ -2,6 +2,8 @@
 
 批量选择 JPG 或 PNG，在浏览器中用 ESRGAN Slim 做 2 倍超分，再按选定顺序导出 PDF。一张图一页。照片和导出的 PDF 都留在当前设备。
 
+也可以先在豆包、ChatGPT 或 Codex 中手动修图，再把保存的结果导回对应照片。网页提供修图指令，支持导入 JPG、PNG 和 WebP，导入后可对比、排序并合成 PDF。选择外部工具时，照片由用户自行上传到该工具。
+
 ## 本地使用
 
 使用 Node.js 22 运行以下命令。Windows PowerShell 可将 `npm` 换成 `npm.cmd`。

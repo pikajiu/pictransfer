@@ -6,6 +6,7 @@ const exportPdf = document.querySelector('#export');
 const results = document.querySelector('#results');
 const items = document.querySelector('#items');
 const status = document.querySelector('#status');
+const promptText = document.querySelector('#prompt-text');
 const entries = [];
 let processing = false;
 let exporting = false;
@@ -29,7 +30,48 @@ function preview(parent, url, label) {
   const image = element('img', '', figure);
   image.src = url;
   image.alt = label;
-  element('figcaption', label, figure);
+  const caption = element('figcaption', label, figure);
+  image.onload = () => {
+    caption.textContent = `${label} · ${image.naturalWidth} × ${image.naturalHeight}`;
+  };
+}
+
+async function importResult(entry, file) {
+  if (!file) return;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024) {
+    status.textContent = '请选择不超过 15 MB 的 JPG、PNG 或 WebP 修图结果。';
+    return;
+  }
+  const inputUrl = URL.createObjectURL(file);
+  entry.importing = true;
+  render();
+  try {
+    const image = new Image();
+    image.src = inputUrl;
+    await image.decode();
+    let result = file;
+    if (file.type === 'image/webp') {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      canvas.getContext('2d').drawImage(image, 0, 0);
+      result = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!result) throw new Error('Conversion failed');
+    }
+    if (!entries.includes(entry)) return;
+    if (entry.resultUrl) URL.revokeObjectURL(entry.resultUrl);
+    entry.result = result;
+    entry.resultUrl = URL.createObjectURL(result);
+    entry.resultLabel = '导入的修图结果';
+    entry.selected = true;
+    status.textContent = `已导入 ${file.name}`;
+  } catch {
+    status.textContent = '无法读取修图结果，请换一张图片。';
+  } finally {
+    entry.importing = false;
+    URL.revokeObjectURL(inputUrl);
+    render();
+  }
 }
 
 function move(index, offset) {
@@ -41,7 +83,7 @@ function move(index, offset) {
 
 function render() {
   results.hidden = entries.length === 0;
-  enhance.disabled = processing || !entries.some((entry) => !entry.result);
+  enhance.disabled = processing || entries.some((entry) => entry.importing) || !entries.some((entry) => !entry.result);
   exportPdf.disabled = exporting || !entries.some((entry) => entry.selected);
   items.replaceChildren();
   entries.forEach((entry, index) => {
@@ -50,9 +92,14 @@ function render() {
     const comparison = element('div', '', item);
     comparison.className = 'comparison';
     preview(comparison, entry.originalUrl, '原图');
-    if (entry.result) preview(comparison, entry.resultUrl, 'AI 增强图');
+    if (entry.result) preview(comparison, entry.resultUrl, entry.resultLabel);
     const row = element('div', '', item);
     row.className = 'row';
+    const importInput = document.createElement('input');
+    importInput.type = 'file';
+    importInput.accept = 'image/jpeg,image/png,image/webp';
+    importInput.onchange = () => importResult(entry, importInput.files[0]);
+    button(entry.result ? '替换修图结果' : '导入修图结果', row, () => importInput.click(), processing || entry.importing);
     if (entry.result) {
       const label = element('label', '', row);
       const checkbox = element('input', '', label);
@@ -110,9 +157,18 @@ photos.onchange = async () => {
 };
 
 enhance.onclick = () => processEntries(entries.filter((entry) => !entry.result));
+document.querySelector('#copy-prompt').onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(promptText.textContent.trim());
+    status.textContent = '已复制修图指令。';
+  } catch {
+    promptText.parentElement.open = true;
+    status.textContent = '请选中并复制修图指令。';
+  }
+};
 
 async function processEntries(queue) {
-  if (processing) return;
+  if (processing || entries.some((entry) => entry.importing)) return;
   processing = true;
   try {
     for (const entry of queue) {
@@ -132,6 +188,7 @@ async function processEntries(queue) {
         await image.decode();
         entry.result = blob;
         entry.resultUrl = resultUrl;
+        entry.resultLabel = '本机增强图';
         entry.selected = true;
       } catch (failure) {
         if (resultUrl) URL.revokeObjectURL(resultUrl);
