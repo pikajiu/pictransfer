@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>清晰成册 · AI 照片增强</title></head>
+<body>
+<main>
+  <header><span class="brand">◈ 清晰成册</span><h1>让照片更清晰</h1><p>用 AI 放大照片，挑选喜欢的结果，整理成一份 PDF。</p></header>
+  <section class="controls" aria-label="添加照片">
+    <label class="picker" for="photos"><strong>＋ 选择照片</strong><span>JPG / PNG · 最多 5 张 · 每张 2 MB</span></label>
+    <input id="photos" type="file" accept="image/jpeg,image/png" multiple>
+    <p class="notice">照片在设备上处理，首次增强需加载模型。长边超过 1024 像素时先缩小再增强，透明区域以白色填充。</p>
+    <div class="actions"><button id="enhance" disabled>AI 增强</button></div>
+    <p id="status" role="status"></p>
+  </section>
+  <section id="results" hidden><div class="section-head"><h2>照片与页序</h2><button id="export" disabled>下载 PDF</button></div><ol id="items"></ol></section>
+</main>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
